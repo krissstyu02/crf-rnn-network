@@ -6,7 +6,7 @@ from torchvision.datasets import VOCSegmentation
 
 # Загрузка изображения
 test_dataset = VOCSegmentation(root='./data', year='2012', image_set='val', download=False)
-index = 100
+index = 116
 transform = transforms.ToTensor()
 image, target = test_dataset[index]
 image = transform(image)
@@ -28,4 +28,13 @@ segmented_image = labels.reshape(image.shape[:2])
 # Визуализация результата
 plt.imshow(segmented_image)
 plt.axis('off')
+plt.show()
+
+
+fig, ax = plt.subplots(ncols=2)
+ax[0].imshow(image)
+ax[0].set_title('Исходное изображение')
+ax[1].imshow(segmented_image)
+ax[1].set_title('Сегментированное изображение')
+
 plt.show()

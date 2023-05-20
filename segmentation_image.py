@@ -8,14 +8,15 @@ from torchvision.datasets import VOCSegmentation
 import torch.optim as optim
 from torchvision import transforms
 from tqdm import tqdm
+import numpy as np
 
-
+#Определение модели CRF-RNN
 class CRF_RNN(nn.Module):
     def __init__(self, num_classes):
         super(CRF_RNN, self).__init__()
         self.num_classes = num_classes
 
-        # Define the CNN backbone
+        # Определение CNN
         self.cnn = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -50,7 +51,7 @@ class CRF_RNN(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2)
         )
 
-        # Define the CRF-RNN
+        # Определение CRF-RNN
         self.crf_rnn = nn.Sequential(
             nn.Conv2d(512, 512, kernel_size=3, padding=1, dilation=1),
             nn.ReLU(),
@@ -86,10 +87,12 @@ class CRF_RNN(nn.Module):
             x = self.crf_rnn(x)
             return F.interpolate(x, scale_factor=4, mode='bilinear', align_corners=False)
 
+#Преобразование изображений в тензоры
 transform = transforms.Compose([
     transforms.ToTensor()  # convert image to tensor
 ])
 
+# Функция для объединения элементов батча
 def custom_collate(batch):
     images = []
     targets = []
@@ -106,26 +109,27 @@ def custom_collate(batch):
         targets.append(target)
     return torch.stack(images), torch.stack(targets)
 
-
+#загрузка датасетов
 train_dataset = VOCSegmentation(root='./data', year='2012', image_set='train', download=False, transform=transform)
 test_dataset = VOCSegmentation(root='./data', year='2012', image_set='val', download=False, transform=transform)
 
 
-# Define the dataloader
+# Определение загрузчиков данных
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True, collate_fn=custom_collate)
 train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, collate_fn=custom_collate)
 
-# Define the model
+# Определение модели
 model = CRF_RNN(num_classes=21)
+#Загрузка весов
 checkpoint = torch.load('model_55EPOH.pt')
 model.load_state_dict(checkpoint)
 
 
-# Define the loss function and optimizer
+# Определение функции потерь и оптимизатора
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-
+#Обучение модели
 def train(model, train_loader, criterion, optimizer):
     model.train()
     train_loss = 0
@@ -146,55 +150,49 @@ num_epochs = 5
 #     train_loss = train(model, train_loader, criterion, optimizer)
 #     print(f'Epoch {epoch + 1} - Train loss: {train_loss:.4f}')
 #
-#
+##Сохранение весов обученной модели
 # torch.save(model.state_dict(), 'model_55EPOH.pt')
 # Define the device to run the model on
 
+
+# Перенос модели на устройство (GPU, если доступно)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
+#Вывод результатов
+index = 155
 
-# Select the desired image index
-index = 100  # Note that indexing starts from 0
-
-# Get the image and target at the specified index
+#Выбираем изображение и маску
 image, target = test_dataset[index]
 
-# Create a mini-batch with a single image
+#  Создание мини-батча с одним изображением
 images = image.unsqueeze(0)
 
-# Move the mini-batch to the device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 images = images.to(device)
 
-# Get the model predictions
+#Результат модели
 with torch.no_grad():
     outputs = model(images)
 
-# Convert the predictions to a segmentation map
+#Преобразование предсказаний в карту сегментации
 _, predicted = torch.max(outputs.data, 1)
 segmentation = predicted.cpu().numpy()[0]
 
-# Get the original image
+#Получение  исходного изображения
 image = images.cpu().numpy()[0].transpose(1, 2, 0)
 
-import numpy as np
-# Get the original segmentation mask
+# маска
 target = np.array(target)
 
-# Plot the images side by side
-fig, ax = plt.subplots(ncols=3)
+#Вывод изображений на экран
+fig, ax = plt.subplots(ncols=2)
 ax[0].imshow(image)
-ax[0].set_title('Original Image')
+ax[0].set_title('Оригинальное изображение')
 ax[1].imshow(target)
-ax[1].set_title('Segmentation Mask')
-ax[2].imshow(segmentation)
-ax[2].set_title('Predicted Segmentation')
+ax[1].set_title('Сегментированное изображение')
+# ax[2].imshow(segmentation)
+# ax[2].set_title('Predicted Segmentation')
 
 plt.show()
 
-
-
-
-#сделать какую то оценку обучения модели
-#реализовать другие методы
