@@ -4,11 +4,12 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+#метод пороговой сегментации
 
 test_dataset = VOCSegmentation(root='./data', year='2012', image_set='val', download=False)
 
 # Определите индекс, соответствующий нужному изображению
-index = 131
+index = 100
 
 # Преобразование изображений в тензоры
 transform = transforms.ToTensor()
@@ -35,3 +36,27 @@ plt.title('Сегментированное изображение')
 plt.tight_layout()
 plt.show()
 
+
+
+# Загрузка изображения
+image = cv2.imread('path/to/your/image.jpg')
+
+# Преобразование изображения в оттенки серого
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+# Применение пороговой сегментации для получения бинарного изображения
+ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+# Поиск контуров на бинарном изображении
+contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Создание маски для контуров
+mask = np.zeros_like(image)
+
+# Отрисовка контуров на маске
+cv2.drawContours(mask, contours, -1, (0, 255, 0), 2)
+
+# Отображение результата
+cv2.imshow('Segmented Image', mask)
+cv2.waitKey(0)
+cv2.destroyAllWindows()

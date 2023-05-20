@@ -117,7 +117,7 @@ train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, collate_fn=
 
 # Define the model
 model = CRF_RNN(num_classes=21)
-checkpoint = torch.load('model_20EPOH.pt')
+checkpoint = torch.load('model_55EPOH.pt')
 model.load_state_dict(checkpoint)
 
 
@@ -126,28 +126,28 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
 
-# def train(model, train_loader, criterion, optimizer):
-#     model.train()
-#     train_loss = 0
-#     for images, targets in tqdm(train_loader):
-#         optimizer.zero_grad()
-#         outputs = model(images)
-#         targets = targets.view(-1)
-#         outputs=outputs.view(-1)
-#         loss = criterion(outputs, targets)
-#         loss.backward()
-#         optimizer.step()
-#         train_loss += loss.item()
-#     return train_loss / len(train_loader)
-#
-#
-# num_epochs = 1
+def train(model, train_loader, criterion, optimizer):
+    model.train()
+    train_loss = 0
+    for images, targets in tqdm(train_loader):
+        optimizer.zero_grad()
+        outputs = model(images)
+        targets = targets.view(-1)
+        outputs=outputs.view(-1)
+        loss = criterion(outputs, targets)
+        loss.backward()
+        optimizer.step()
+        train_loss += loss.item()
+    return train_loss / len(train_loader)
+
+
+num_epochs = 5
 # for epoch in range(num_epochs):
 #     train_loss = train(model, train_loader, criterion, optimizer)
 #     print(f'Epoch {epoch + 1} - Train loss: {train_loss:.4f}')
 #
 #
-# torch.save(model.state_dict(), 'model_21EPOH.pt')
+# torch.save(model.state_dict(), 'model_55EPOH.pt')
 # Define the device to run the model on
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -155,7 +155,7 @@ model.to(device)
 
 
 # Select the desired image index
-index = 131  # Note that indexing starts from 0
+index = 100  # Note that indexing starts from 0
 
 # Get the image and target at the specified index
 image, target = test_dataset[index]
